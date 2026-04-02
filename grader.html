@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free Website Grader — swft Digital</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fafaf8;
+    --surface: #ffffff;
+    --surface-2: #f2f1ee;
+    --text: #1a1a2e;
+    --text-muted: #6b6b80;
+    --accent: #00b4d8;
+    --accent-2: #9333ea;
+    --gradient: linear-gradient(135deg, #00b4d8 0%, #9333ea 100%);
+    --border: #e5e4e0;
+    --border-focus: #00b4d8;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
+    --shadow-lg: 0 4px 16px rgba(0,0,0,0.06), 0 12px 40px rgba(0,0,0,0.04);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  .top-bar {
+    padding: 16px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .top-brand {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+  }
+  .top-brand a { text-decoration: none; color: var(--accent); }
+  .top-brand a span { color: var(--text-muted); }
+  .top-bar-right { font-size: 13px; color: var(--text-muted); }
+
+  .grader-hero {
+    text-align: center;
+    padding: 72px 24px 48px;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  .grader-badge {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(0,180,216,0.08);
+    border: 1px solid rgba(0,180,216,0.2);
+    padding: 6px 16px;
+    border-radius: 100px;
+    margin-bottom: 24px;
+  }
+  .grader-hero h1 {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(36px, 6vw, 56px);
+    font-weight: 400;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+  .grader-hero h1 em {
+    font-style: italic;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .grader-hero p {
+    font-size: 17px;
+    color: var(--text-muted);
+    max-width: 500px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+
+  .url-input-wrap {
+    max-width: 560px;
+    margin: 32px auto 0;
+    display: flex;
+    gap: 12px;
+  }
+  .url-input-wrap .input-field {
+    flex: 1;
+    padding: 16px 20px;
+    font-size: 16px;
+  }
+
+  .progress-wrap {
+    max-width: 600px;
+    margin: 0 auto 40px;
+    padding: 0 24px;
+  }
+  .progress-bar-bg {
+    height: 4px;
+    background: var(--border);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--gradient);
+    border-radius: 100px;
+    transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    width: 0%;
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .grader-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+  .input-field {
+    width: 100%;
+    padding: 14px 18px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    color: var(--text);
+    background: var(--bg);
+    transition: all 0.2s;
+    outline: none;
+  }
+  .input-field:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(0,180,216,0.1);
+  }
+  .input-field::placeholder { color: #b0b0b8; }
+
+  .step { display: none; animation: stepIn 0.4s ease; }
+  .step.active { display: block; }
+  @keyframes stepIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .step-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: var(--shadow);
+  }
+  .step-question {
+    font-family: 'Instrument Serif', serif;
+    font-size: 24px;
+    font-weight: 400;
+    margin-bottom: 8px;
+  }
+  .step-hint { font-size: 14px; color: var(--text-muted); margin-bottom: 28px; }
+
+  .options-grid { display: grid; gap: 12px; }
+  .option-card {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px 20px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--bg);
+    user-select: none;
+  }
+  .option-card:hover { border-color: var(--accent); background: rgba(0,180,216,0.03); }
+  .option-card.selected {
+    border-color: var(--accent);
+    background: rgba(0,180,216,0.06);
+    box-shadow: 0 0 0 3px rgba(0,180,216,0.1);
+  }
+  .option-dot {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.2s;
+  }
+  .option-card.selected .option-dot { border-color: var(--accent); background: var(--accent); }
+  .option-dot::after {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: white; opacity: 0; transition: opacity 0.2s;
+  }
+  .option-card.selected .option-dot::after { opacity: 1; }
+  .option-label { font-size: 15px; font-weight: 500; }
+  .option-desc { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+  .step-nav { display: flex; justify-content: space-between; margin-top: 24px; }
+  .btn {
+    padding: 14px 32px; border-radius: 100px;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; border: none; text-decoration: none;
+  }
+  .btn-next { background: var(--gradient); color: white; margin-left: auto; }
+  .btn-next:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,180,216,0.25); }
+  .btn-next:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-back { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+  .btn-back:hover { background: var(--surface-2); }
+
+  .scan-overlay {
+    display: none; position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(250,250,248,0.97);
+    z-index: 1000;
+    flex-direction: column; align-items: center; justify-content: center; gap: 24px;
+  }
+  .scan-overlay.active { display: flex; }
+  .scan-spinner {
+    width: 56px; height: 56px; border-radius: 50%;
+    border: 3px solid var(--border); border-top-color: var(--accent);
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .scan-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; color: var(--text-muted); letter-spacing: 1px; text-align: center;
+  }
+  .scan-url { font-size: 15px; font-weight: 600; color: var(--text); margin-top: -12px; }
+  .scan-checks { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .scan-check {
+    font-size: 14px; color: var(--text-muted);
+    display: flex; align-items: center; gap: 8px;
+    opacity: 0; transform: translateY(8px); transition: all 0.3s ease;
+  }
+  .scan-check.visible { opacity: 1; transform: translateY(0); }
+  .scan-check .check-icon { color: #16a34a; font-weight: 700; }
+
+  .results-container {
+    display: none; max-width: 680px; margin: 0 auto;
+    padding: 48px 24px 80px; animation: stepIn 0.6s ease;
+  }
+  .results-container.active { display: block; }
+
+  .results-header {
+    display: flex; align-items: center; gap: 32px;
+    margin-bottom: 40px; padding: 32px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; box-shadow: var(--shadow);
+  }
+  .score-ring { width: 160px; height: 160px; position: relative; flex-shrink: 0; }
+  .score-ring svg { transform: rotate(-90deg); }
+  .score-ring-bg { fill: none; stroke: var(--border); stroke-width: 8; }
+  .score-ring-fill {
+    fill: none; stroke: url(#scoreGradient); stroke-width: 8;
+    stroke-linecap: round; stroke-dasharray: 440; stroke-dashoffset: 440;
+    transition: stroke-dashoffset 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .score-number {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); text-align: center;
+  }
+  .score-number .num {
+    font-family: 'Instrument Serif', serif; font-size: 48px; line-height: 1;
+    background: var(--gradient);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .score-number .out-of { font-size: 12px; color: var(--text-muted); }
+
+  .results-header-text { flex: 1; }
+  .results-header-text .score-label {
+    font-family: 'Instrument Serif', serif; font-size: 28px; margin-bottom: 4px;
+  }
+  .results-header-text .score-url {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    color: var(--accent); margin-bottom: 8px;
+  }
+  .results-header-text .score-summary {
+    color: var(--text-muted); font-size: 14px; line-height: 1.6;
+  }
+
+  .category-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px; margin-bottom: 40px;
+  }
+  .category-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px; text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .category-score {
+    font-family: 'Instrument Serif', serif; font-size: 32px;
+    line-height: 1; margin-bottom: 4px;
+  }
+  .category-score.good { color: #16a34a; }
+  .category-score.ok { color: #d97706; }
+  .category-score.bad { color: #dc2626; }
+  .category-label {
+    font-size: 12px; color: var(--text-muted); font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .category-bar {
+    height: 4px; background: var(--border); border-radius: 100px;
+    margin-top: 12px; overflow: hidden;
+  }
+  .category-bar-fill {
+    height: 100%; border-radius: 100px;
+    transition: width 1s ease 0.5s; width: 0%;
+  }
+  .category-bar-fill.good { background: #16a34a; }
+  .category-bar-fill.ok { background: #d97706; }
+  .category-bar-fill.bad { background: #dc2626; }
+
+  .rec-section-title {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 16px;
+  }
+  .rec-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px;
+    margin-bottom: 12px; box-shadow: var(--shadow);
+  }
+  .rec-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .rec-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .rec-icon.red { background: #fef2f2; }
+  .rec-icon.yellow { background: #fffbeb; }
+  .rec-icon.green { background: #f0fdf4; }
+  .rec-card h3 { font-size: 16px; font-weight: 600; }
+  .rec-card p { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-left: 48px; }
+  .rec-tag {
+    display: inline-block; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1px;
+    padding: 3px 8px; border-radius: 4px; margin-left: 8px;
+  }
+  .rec-tag.critical { background: #fef2f2; color: #dc2626; }
+  .rec-tag.warning { background: #fffbeb; color: #d97706; }
+  .rec-tag.good { background: #f0fdf4; color: #16a34a; }
+
+  .tech-details {
+    margin-top: 24px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; box-shadow: var(--shadow);
+  }
+  .tech-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 24px; font-size: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tech-row:last-child { border-bottom: none; }
+  .tech-label { color: var(--text-muted); }
+  .tech-value { font-weight: 600; }
+  .tech-value.pass { color: #16a34a; }
+  .tech-value.fail { color: #dc2626; }
+  .tech-value.warn { color: #d97706; }
+
+  .capture-box {
+    margin-top: 48px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 16px;
+    padding: 40px; text-align: center;
+    box-shadow: var(--shadow-lg); position: relative; overflow: hidden;
+  }
+  .capture-box::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 3px; background: var(--gradient);
+  }
+  .capture-box h3 {
+    font-family: 'Instrument Serif', serif; font-size: 26px;
+    font-weight: 400; margin-bottom: 8px;
+  }
+  .capture-box > p { color: var(--text-muted); font-size: 15px; margin-bottom: 24px; }
+  .capture-form { display: flex; gap: 12px; max-width: 440px; margin: 0 auto; }
+  .capture-form .input-field { flex: 1; }
+  .capture-form .btn-next { white-space: nowrap; padding: 14px 28px; }
+
+  .capture-success { display: none; text-align: center; padding: 20px 0; }
+  .capture-success .check {
+    width: 48px; height: 48px; border-radius: 50%; background: #f0fdf4;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 12px; font-size: 24px;
+  }
+  .capture-success h4 { font-size: 18px; margin-bottom: 4px; }
+  .capture-success p { color: var(--text-muted); font-size: 14px; }
+
+  .grader-footer {
+    text-align: center; padding: 32px 24px;
+    color: var(--text-muted); font-size: 13px;
+    border-top: 1px solid var(--border);
+  }
+  .grader-footer a { color: var(--accent); text-decoration: none; }
+
+  .url-error {
+    color: #dc2626; font-size: 13px; margin-top: 8px;
+    text-align: center; display: none;
+  }
+
+  @media (max-width: 640px) {
+    .grader-hero { padding: 48px 20px 32px; }
+    .url-input-wrap { flex-direction: column; }
+    .step-card { padding: 28px 24px; }
+    .capture-form { flex-direction: column; }
+    .capture-box { padding: 28px 24px; }
+    .top-bar { padding: 12px 20px; }
+    .top-bar-right { display: none; }
+    .results-header { flex-direction: column; text-align: center; gap: 20px; }
+    .category-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="scan-overlay" id="scanOverlay">
+  <div class="scan-spinner"></div>
+  <div class="scan-url" id="scanUrl"></div>
+  <div class="scan-status" id="scanStatus">Analyzing your website...</div>
+  <div class="scan-checks" id="scanChecks">
+    <div class="scan-check" id="check1"><span class="check-icon">&#10003;</span> Testing page speed</div>
+    <div class="scan-check" id="check2"><span class="check-icon">&#10003;</span> Checking mobile responsiveness</div>
+    <div class="scan-check" id="check3"><span class="check-icon">&#10003;</span> Analyzing SEO fundamentals</div>
+    <div class="scan-check" id="check4"><span class="check-icon">&#10003;</span> Evaluating accessibility</div>
+    <div class="scan-check" id="check5"><span class="check-icon">&#10003;</span> Generating your report</div>
+  </div>
+</div>
+
+<div class="top-bar">
+  <div class="top-brand"><a href="#">swft <span>Digital</span></a></div>
+  <div class="top-bar-right">Free tool — no account needed</div>
+</div>
+
+<div class="grader-hero" id="heroSection">
+  <div class="grader-badge">Free AI Website Grader</div>
+  <h1>Is your website <em>helping or hurting</em> your business?</h1>
+  <p>Enter your URL and answer a few quick questions. We'll scan your site and give you a real score with actionable recommendations.</p>
+  <div class="url-input-wrap">
+    <input type="url" class="input-field" id="urlInput" placeholder="https://yourbusiness.com">
+    <button class="btn btn-next" onclick="startGrading()">Scan My Site &#8594;</button>
+  </div>
+  <div class="url-error" id="urlError">Please enter a valid URL</div>
+</div>
+
+<div class="progress-wrap" id="progressWrap" style="display: none;">
+  <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+  <div class="progress-label">
+    <span id="progressStep">Question 1 of 4</span>
+    <span id="progressPct">0%</span>
+  </div>
+</div>
+
+<div class="grader-container" id="formContainer" style="display: none;">
+  <div class="step active" data-step="1">
+    <div class="step-card">
+      <div class="step-question">What type of business do you run?</div>
+      <div class="step-hint">This helps us tailor your recommendations.</div>
+      <div class="options-grid">
+        <div class="option-card" data-value="restaurant"><div class="option-dot"></div><div><div class="option-label">Restaurant / Food & Bev</div></div></div>
+        <div class="option-card" data-value="retail"><div class="option-dot"></div><div><div class="option-label">Retail / E-commerce</div></div></div>
+        <div class="option-card" data-value="service"><div class="option-dot"></div><div><div class="option-label">Service Business</div><div class="option-desc">Salon, contractor, consulting, etc.</div></div></div>
+        <div class="option-card" data-value="other"><div class="option-dot"></div><div><div class="option-label">Other</div></div></div>
+      </div>
+    </div>
+    <div class="step-nav"><button class="btn btn-next" disabled onclick="nextStep()">Continue &#8594;</button></div>
+  </div>
+
+  <div class="step" data-step="2">
+    <div class="step-card">
+      <div class="step-question">Can customers find you on Google?</div>
+      <div class="step-hint">Try searching your business name — what shows up?</div>
+      <div class="options-grid">
+        <div class="option-card" data-value="top"><div class="option-dot"></div><div><div class="option-label">We show up on the first page</div></div></div>
+        <div class="option-card" data-value="buried"><div class="option-dot"></div><div><div class="option-label">We're there but buried</div></div></div>
+        <div class="option-card" data-value="not-really"><div class="option-dot"></div><div><div class="option-label">Not really / I haven't checked</div></div></div>
+        <div class="option-card" data-value="no-seo"><div class="option-dot"></div><div><div class="option-label">We've never done any SEO</div></div></div>
+      </div>
+    </div>
+    <div class="step-nav">
+      <button class="btn btn-back" onclick="prevStep()">&#8592; Back</button>
+      <button class="btn btn-next" disabled onclick="nextStep()">Continue &#8594;</button>
+    </div>
+  </div>
+
+  <div class="step" data-step="3">
+    <div class="step-card">
+      <div class="step-question">How active are you on social media?</div>
+      <div class="step-hint">Instagram, Facebook, TikTok, Google Business — any of them.</div>
+      <div class="options-grid">
+        <div class="option-card" data-value="active"><div class="option-dot"></div><div><div class="option-label">We post regularly (weekly+)</div></div></div>
+        <div class="option-card" data-value="sometimes"><div class="option-dot"></div><div><div class="option-label">Sometimes, but not consistent</div></div></div>
+        <div class="option-card" data-value="have-not-use"><div class="option-dot"></div><div><div class="option-label">We have accounts but rarely post</div></div></div>
+        <div class="option-card" data-value="none"><div class="option-dot"></div><div><div class="option-label">We're not on social media</div></div></div>
+      </div>
+    </div>
+    <div class="step-nav">
+      <button class="btn btn-back" onclick="prevStep()">&#8592; Back</button>
+      <button class="btn btn-next" disabled onclick="nextStep()">Continue &#8594;</button>
+    </div>
+  </div>
+
+  <div class="step" data-step="4">
+    <div class="step-card">
+      <div class="step-question">What's your biggest challenge right now?</div>
+      <div class="step-hint">Pick the one that keeps you up at night.</div>
+      <div class="options-grid">
+        <div class="option-card" data-value="traffic"><div class="option-dot"></div><div><div class="option-label">Not enough people finding us online</div></div></div>
+        <div class="option-card" data-value="conversion"><div class="option-dot"></div><div><div class="option-label">People visit but don't buy / book / call</div></div></div>
+        <div class="option-card" data-value="credibility"><div class="option-dot"></div><div><div class="option-label">Our online presence looks unprofessional</div></div></div>
+        <div class="option-card" data-value="time"><div class="option-dot"></div><div><div class="option-label">No time to manage any of this</div></div></div>
+      </div>
+    </div>
+    <div class="step-nav">
+      <button class="btn btn-back" onclick="prevStep()">&#8592; Back</button>
+      <button class="btn btn-next" disabled onclick="showResults()">See My Score &#8594;</button>
+    </div>
+  </div>
+</div>
+
+<div class="results-container" id="resultsContainer">
+  <div class="results-header">
+    <div class="score-ring">
+      <svg width="160" height="160" viewBox="0 0 160 160">
+        <defs>
+          <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#00b4d8"/>
+            <stop offset="100%" stop-color="#9333ea"/>
+          </linearGradient>
+        </defs>
+        <circle class="score-ring-bg" cx="80" cy="80" r="70"/>
+        <circle class="score-ring-fill" id="scoreRing" cx="80" cy="80" r="70"/>
+      </svg>
+      <div class="score-number">
+        <div class="num" id="scoreNum">0</div>
+        <div class="out-of">out of 100</div>
+      </div>
+    </div>
+    <div class="results-header-text">
+      <div class="score-label" id="scoreLabel"></div>
+      <div class="score-url" id="resultUrl"></div>
+      <div class="score-summary" id="scoreSummary"></div>
+    </div>
+  </div>
+
+  <div class="category-grid" id="categoryGrid"></div>
+
+  <div class="rec-section-title">// Technical Scan Results</div>
+  <div class="tech-details" id="techDetails"></div>
+
+  <div style="margin-top: 40px;">
+    <div class="rec-section-title">// Your Recommendations</div>
+    <div id="recommendations"></div>
+  </div>
+
+  <div class="capture-box">
+    <div id="captureForm">
+      <h3>Want us to fix this for you?</h3>
+      <p>Drop your email and we'll send a detailed action plan plus a free 15-minute strategy call to walk through your results.</p>
+      <div class="capture-form">
+        <input type="email" class="input-field" id="emailInput" placeholder="you@yourbusiness.com">
+        <button class="btn btn-next" onclick="submitEmail()">Get My Plan &#8594;</button>
+      </div>
+    </div>
+    <div class="capture-success" id="captureSuccess">
+      <div class="check">&#10003;</div>
+      <h4>You're all set!</h4>
+      <p>We'll send your action plan shortly. Want to skip the wait and chat now?</p>
+      <a href="mailto:hello@swftdigital.com" class="btn btn-next" style="display: inline-flex; margin-top: 16px;">Book a Free Call &#8594;</a>
+    </div>
+  </div>
+</div>
+
+<div class="grader-footer">
+  Built by <a href="#">swft Digital</a> &middot; Scottsdale, AZ &middot; AI-powered digital solutions
+</div>
+
+<script>
+let currentStep = 1;
+const totalSteps = 4;
+const answers = {};
+let pageSpeedData = null;
+let siteUrl = '';
+
+document.querySelectorAll('.option-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const step = card.closest('.step');
+    step.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    answers[parseInt(step.dataset.step)] = card.dataset.value;
+    step.querySelector('.btn-next').disabled = false;
+  });
+});
+
+function updateProgress() {
+  const pct = Math.round(((currentStep - 1) / totalSteps) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressStep').textContent = 'Question ' + currentStep + ' of ' + totalSteps;
+  document.getElementById('progressPct').textContent = pct + '%';
+}
+
+function nextStep() {
+  if (currentStep >= totalSteps) return;
+  document.querySelector('.step[data-step="' + currentStep + '"]').classList.remove('active');
+  currentStep++;
+  document.querySelector('.step[data-step="' + currentStep + '"]').classList.add('active');
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function prevStep() {
+  if (currentStep <= 1) return;
+  document.querySelector('.step[data-step="' + currentStep + '"]').classList.remove('active');
+  currentStep--;
+  document.querySelector('.step[data-step="' + currentStep + '"]').classList.add('active');
+  updateProgress();
+}
+
+function formatUrl(url) {
+  url = url.trim();
+  if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
+  return url;
+}
+
+async function startGrading() {
+  const rawUrl = document.getElementById('urlInput').value.trim();
+  if (!rawUrl) {
+    document.getElementById('urlError').style.display = 'block';
+    return;
+  }
+  siteUrl = formatUrl(rawUrl);
+  document.getElementById('urlError').style.display = 'none';
+
+  const overlay = document.getElementById('scanOverlay');
+  overlay.classList.add('active');
+  document.getElementById('scanUrl').textContent = siteUrl;
+
+  const checks = ['check1','check2','check3','check4','check5'];
+  checks.forEach((id, i) => {
+    setTimeout(() => document.getElementById(id).classList.add('visible'), 800 + (i * 700));
+  });
+
+  try {
+    const apiUrl = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=' +
+      encodeURIComponent(siteUrl) +
+      '&category=PERFORMANCE&category=ACCESSIBILITY&category=BEST_PRACTICES&category=SEO&strategy=MOBILE';
+    const response = await fetch(apiUrl);
+    if (!response.ok) throw new Error('API error');
+    pageSpeedData = await response.json();
+  } catch (err) {
+    console.log('PageSpeed API error:', err);
+    pageSpeedData = null;
+  }
+
+  setTimeout(() => {
+    overlay.classList.remove('active');
+    document.getElementById('heroSection').style.display = 'none';
+    document.getElementById('progressWrap').style.display = 'block';
+    document.getElementById('formContainer').style.display = 'block';
+    updateProgress();
+  }, 4500);
+}
+
+function getApiScores() {
+  if (!pageSpeedData || !pageSpeedData.lighthouseResult) {
+    return { performance: null, accessibility: null, bestPractices: null, seo: null };
+  }
+  const cats = pageSpeedData.lighthouseResult.categories;
+  return {
+    performance: Math.round((cats.performance?.score || 0) * 100),
+    accessibility: Math.round((cats.accessibility?.score || 0) * 100),
+    bestPractices: Math.round((cats['best-practices']?.score || 0) * 100),
+    seo: Math.round((cats.seo?.score || 0) * 100)
+  };
+}
+
+function getAuditDetails() {
+  if (!pageSpeedData || !pageSpeedData.lighthouseResult) return [];
+  const audits = pageSpeedData.lighthouseResult.audits;
+  const details = [];
+
+  if (audits['speed-index']) {
+    const v = audits['speed-index'].numericValue;
+    details.push({ label: 'Page Load Speed', value: (v/1000).toFixed(1)+'s', status: v<3400?'pass':v<5800?'warn':'fail' });
+  }
+  if (audits['first-contentful-paint']) {
+    const v = audits['first-contentful-paint'].numericValue;
+    details.push({ label: 'First Contentful Paint', value: (v/1000).toFixed(1)+'s', status: v<1800?'pass':v<3000?'warn':'fail' });
+  }
+  if (audits['largest-contentful-paint']) {
+    const v = audits['largest-contentful-paint'].numericValue;
+    details.push({ label: 'Largest Contentful Paint', value: (v/1000).toFixed(1)+'s', status: v<2500?'pass':v<4000?'warn':'fail' });
+  }
+  if (audits['cumulative-layout-shift']) {
+    const v = audits['cumulative-layout-shift'].numericValue;
+    details.push({ label: 'Layout Stability (CLS)', value: v.toFixed(3), status: v<0.1?'pass':v<0.25?'warn':'fail' });
+  }
+  if (audits['viewport']) {
+    details.push({ label: 'Mobile Viewport', value: audits['viewport'].score===1?'Configured':'Missing', status: audits['viewport'].score===1?'pass':'fail' });
+  }
+  if (audits['is-on-https']) {
+    details.push({ label: 'HTTPS / SSL', value: audits['is-on-https'].score===1?'Secure':'Not Secure', status: audits['is-on-https'].score===1?'pass':'fail' });
+  }
+  if (audits['document-title']) {
+    details.push({ label: 'Page Title Tag', value: audits['document-title'].score===1?'Present':'Missing', status: audits['document-title'].score===1?'pass':'fail' });
+  }
+  if (audits['meta-description']) {
+    details.push({ label: 'Meta Description', value: audits['meta-description'].score===1?'Present':'Missing', status: audits['meta-description'].score===1?'pass':'fail' });
+  }
+  return details;
+}
+
+function calculateOverallScore() {
+  const api = getApiScores();
+  let score = 0;
+  const quizMap = { 2: { top:25, buried:15, 'not-really':5, 'no-seo':0 }, 3: { active:25, sometimes:15, 'have-not-use':5, none:0 } };
+  let quizScore = 0;
+  if (answers[2] && quizMap[2][answers[2]] !== undefined) quizScore += quizMap[2][answers[2]];
+  if (answers[3] && quizMap[3][answers[3]] !== undefined) quizScore += quizMap[3][answers[3]];
+  quizScore = Math.min(quizScore * 2, 100);
+
+  if (api.performance !== null) {
+    const apiAvg = (api.performance + api.seo + api.accessibility + api.bestPractices) / 4;
+    score = (apiAvg * 0.6) + (quizScore * 0.4);
+  } else {
+    score = quizScore;
+  }
+  return Math.round(Math.min(score, 100));
+}
+
+function showResults() {
+  const score = calculateOverallScore();
+  const api = getApiScores();
+  const techDets = getAuditDetails();
+
+  document.getElementById('formContainer').style.display = 'none';
+  document.getElementById('progressWrap').style.display = 'none';
+  document.getElementById('resultsContainer').classList.add('active');
+  document.getElementById('resultUrl').textContent = siteUrl;
+
+  const circ = 2 * Math.PI * 70;
+  document.getElementById('scoreRing').style.strokeDasharray = circ;
+  document.getElementById('scoreRing').style.strokeDashoffset = circ;
+  setTimeout(() => {
+    document.getElementById('scoreRing').style.strokeDashoffset = circ - (score/100)*circ;
+  }, 100);
+
+  let cur = 0;
+  const iv = setInterval(() => { cur++; document.getElementById('scoreNum').textContent = cur; if(cur>=score) clearInterval(iv); }, 20);
+
+  let label, summary;
+  if (score >= 75) { label='Looking strong!'; summary='Your online presence is better than most local businesses. With some targeted improvements, you could dominate your market.'; }
+  else if (score >= 50) { label='Room to grow'; summary='You\'ve got a foundation, but there are clear gaps costing you customers. A few strategic moves could make a big impact fast.'; }
+  else if (score >= 25) { label='Needs serious work'; summary='Your online presence is likely losing you customers every day. The recommendations below show exactly where to focus first.'; }
+  else { label='Time for an upgrade'; summary='Your website needs significant improvements to compete. The detailed breakdown below shows you exactly what to fix and in what order.'; }
+  document.getElementById('scoreLabel').textContent = label;
+  document.getElementById('scoreSummary').textContent = summary;
+
+  if (api.performance !== null) {
+    const cats = [
+      { label:'Speed', score:api.performance },
+      { label:'SEO', score:api.seo },
+      { label:'Accessible', score:api.accessibility },
+      { label:'Best Practices', score:api.bestPractices }
+    ];
+    document.getElementById('categoryGrid').innerHTML = cats.map(c => {
+      const cls = c.score>=70?'good':c.score>=40?'ok':'bad';
+      return '<div class="category-card"><div class="category-score '+cls+'">'+c.score+'</div><div class="category-label">'+c.label+'</div><div class="category-bar"><div class="category-bar-fill '+cls+'" style="width:0%" data-width="'+c.score+'%"></div></div></div>';
+    }).join('');
+    setTimeout(() => { document.querySelectorAll('.category-bar-fill').forEach(b => { b.style.width = b.dataset.width; }); }, 200);
+  }
+
+  if (techDets.length > 0) {
+    document.getElementById('techDetails').innerHTML = techDets.map(d =>
+      '<div class="tech-row"><span class="tech-label">'+d.label+'</span><span class="tech-value '+d.status+'">'+d.value+'</span></div>'
+    ).join('');
+  } else {
+    document.getElementById('techDetails').innerHTML = '<div class="tech-row"><span class="tech-label">Technical scan unavailable — see recommendations below</span></div>';
+  }
+
+  const recs = [];
+  if (api.performance !== null) {
+    if (api.performance < 40) recs.push({ icon:'&#9889;', level:'critical', tag:'Critical', title:'Your site is painfully slow', desc:'With a performance score of '+api.performance+'/100, visitors are leaving before your page loads. Optimize images, reduce scripts, and upgrade hosting.' });
+    else if (api.performance < 70) recs.push({ icon:'&#9889;', level:'yellow', tag:'Warning', title:'Page speed needs improvement', desc:'Your performance score of '+api.performance+'/100 means slower loads than competitors. Compress images, enable caching, and minimize JavaScript.' });
+    else recs.push({ icon:'&#9889;', level:'green', tag:'Good', title:'Solid page speed', desc:'Your site loads faster than most at '+api.performance+'/100. Consider a CDN and further image optimization to push it even further.' });
+
+    if (api.seo < 60) recs.push({ icon:'&#128269;', level:'critical', tag:'Critical', title:'Major SEO issues detected', desc:'Your SEO score of '+api.seo+'/100 means Google struggles to understand your site. Missing meta tags, poor headings, or missing alt text are likely culprits.' });
+    else if (api.seo < 85) recs.push({ icon:'&#128269;', level:'yellow', tag:'Warning', title:'SEO could be stronger', desc:'At '+api.seo+'/100, your site has basic SEO but is missing opportunities. Add structured data and improve meta descriptions.' });
+
+    if (api.accessibility < 70) recs.push({ icon:'&#9855;', level:'yellow', tag:'Warning', title:'Accessibility issues found', desc:'Your accessibility score of '+api.accessibility+'/100 means some visitors may struggle to use your site. Add alt text and improve color contrast.' });
+  }
+
+  if (answers[2]==='no-seo'||answers[2]==='not-really') recs.push({ icon:'&#127760;', level:'critical', tag:'Critical', title:'You\'re invisible on Google', desc:'If customers can\'t find you when they search, they\'re finding your competitors. Local SEO can get you showing up in weeks.' });
+  else if (answers[2]==='buried') recs.push({ icon:'&#127760;', level:'yellow', tag:'Warning', title:'Your Google presence needs a boost', desc:'You\'re on Google but buried. A focused local SEO strategy could move you to page one.' });
+
+  if (answers[3]==='none'||answers[3]==='have-not-use') recs.push({ icon:'&#128247;', level:'yellow', tag:'Warning', title:'Social media is a missed opportunity', desc:'Pick one or two platforms and show up consistently. Even 3 posts a week makes a difference.' });
+  else if (answers[3]==='sometimes') recs.push({ icon:'&#128247;', level:'yellow', tag:'Warning', title:'Consistency is key on social', desc:'Sporadic posting can hurt more than it helps. A simple content calendar keeps you visible.' });
+
+  document.getElementById('recommendations').innerHTML = recs.map(r =>
+    '<div class="rec-card"><div class="rec-card-header"><div class="rec-icon '+(r.level==='critical'?'red':r.level==='yellow'?'yellow':'green')+'">'+r.icon+'</div><h3>'+r.title+'<span class="rec-tag '+(r.level==='critical'?'critical':r.level==='yellow'?'warning':'good')+'">'+r.tag+'</span></h3></div><p>'+r.desc+'</p></div>'
+  ).join('');
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function submitEmail() {
+  const email = document.getElementById('emailInput').value;
+  if (!email || !email.includes('@')) { document.getElementById('emailInput').style.borderColor='#dc2626'; return; }
+  console.log('LEAD CAPTURED:', { email, url: siteUrl, answers, apiScores: getApiScores(), timestamp: new Date().toISOString() });
+  document.getElementById('captureForm').style.display = 'none';
+  document.getElementById('captureSuccess').style.display = 'block';
+}
+
+document.getElementById('urlInput').addEventListener('keydown', e => { if (e.key==='Enter') startGrading(); });
+</script>
+</body>
+</html>
