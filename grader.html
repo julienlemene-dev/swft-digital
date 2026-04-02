@@ -650,12 +650,20 @@ async function startGrading() {
   });
 
   try {
-    const apiUrl = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=' +
-      encodeURIComponent(siteUrl) +
-      '&category=PERFORMANCE&category=ACCESSIBILITY&category=BEST_PRACTICES&category=SEO&strategy=MOBILE';
-    const response = await fetch(apiUrl);
+    // Use PageSpeed Insights public API; ensure CORS is allowed and double-check URL
+    // strategy can be 'MOBILE' or 'DESKTOP' as needed
+    const apiUrl = `https://pagespeedonline.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(siteUrl)}&category=performance&category=accessibility&category=best-practices&category=seo&strategy=MOBILE${window.PAGE_SPEED_API_KEY ? `&key=${window.PAGE_SPEED_API_KEY}` : ''}`;
+    
+    // Optionally add your API key via window.PAGE_SPEED_API_KEY (for quota); or leave blank for anonymous
+    
+    const response = await fetch(apiUrl, { mode: 'cors' });
     if (!response.ok) throw new Error('API error');
     pageSpeedData = await response.json();
+
+    // Optional: If lighthouseResult doesn't exist, try showing a user-friendly error
+    if (!pageSpeedData.lighthouseResult) {
+      throw new Error(pageSpeedData.error?.message || 'Failed to analyze site with PageSpeed API');
+    }
   } catch (err) {
     console.log('PageSpeed API error:', err);
     pageSpeedData = null;
